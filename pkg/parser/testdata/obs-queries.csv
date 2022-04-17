@@ -1,0 +1,12 @@
+demo_cpu_usage_seconds_total{mode="idle"}|1597056698698|1597059548699|15000
+avg by(instance) (demo_cpu_usage_seconds_total)|1597057698698|1597058548699|60000
+avg without(instance, mode) (demo_cpu_usage_seconds_total)|1597056698698|1597059548699|120000
+topk by(instance) (2, demo_cpu_usage_seconds_total)|1597058698698|1597059548699|60000
+avg(max by(mode) (demo_cpu_usage_seconds_total))|1597055698698|1597057548699|600000
+sum by(instance, mode) (demo_cpu_usage_seconds_total) ^ on(instance, mode) group_left(job) demo_cpu_usage_seconds_total|1597055698698|1597059548699|15000
+sum without(job) (demo_cpu_usage_seconds_total) / on(instance, mode) demo_cpu_usage_seconds_total|1597056698698|1597058548699|60000
+demo_cpu_usage_seconds_total / on(instance, job) group_left demo_num_cpus|1597057698698|1597059548699|60000
+avg_over_time(demo_cpu_usage_seconds_total[15s])|1597057698698|1597059548699|120000
+delta(demo_cpu_usage_seconds_total[1m])|1597055698698|1597058548699|5000
+rate(demo_cpu_usage_seconds_total[1m])|1597055698698|1597059548699|5000
+
