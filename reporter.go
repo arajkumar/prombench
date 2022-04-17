@@ -4,7 +4,7 @@ import "time"
 
 // Execution statistics of works.
 type Report struct {
-	durtion []time.Duration
+	Duration []time.Duration
 }
 
 // Abstracts various type of reporters. e.g. Console, JSON, CSV..

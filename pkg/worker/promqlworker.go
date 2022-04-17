@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"github.com/arajkumar/prombench"
+	"golang.org/x/sync/errgroup"
 )
 
 // Option controls the configuration of a Matcher.
@@ -58,28 +59,50 @@ func WithConcurrency(concurrency int) Option {
 	}
 }
 
+func (w promqlWorker) run(ctx context.Context, host *url.URL, q prombench.Query) (time.Duration, error) {
+	r, err := q.NewHttpPromQuery(ctx, host)
+	if err != nil {
+		return 0, err
+	}
+	start := time.Now()
+	resp, err := w.client.Do(r)
+	if err == nil {
+		// Read and ignore reponse body!
+		io.Copy(ioutil.Discard, resp.Body)
+		resp.Body.Close()
+	} else {
+		return 0, err
+	}
+	return time.Since(start), err
+}
+
 // Implements Worker interface.
 func (w promqlWorker) Run(ctx context.Context, host *url.URL, queries prombench.QueryChannel) (prombench.Report, error) {
 	errC := make(chan error, 1)
 	ctrlC := make(chan time.Duration, 1)
-	for q := range queries {
-		go func(q prombench.Query) {
-			r, err := q.NewHttpPromQuery(ctx, host)
-			if err != nil {
-				errC <- err
-				return
-			}
-			start := time.Now()
-			resp, err := w.client.Do(r)
-			if err == nil {
-				// Read and ignore reponse body!
-				io.Copy(ioutil.Discard, resp.Body)
-				resp.Body.Close()
-			} else {
-				errC <- err
-			}
-			ctrlC <- time.Since(start)
-		}(q)
+	go func() {
+		defer close(errC)
+		defer close(ctrlC)
+		var g errgroup.Group
+		for q := range queries {
+			g.Go(func() error {
+				dur, err := w.run(ctx, host, q)
+				if err != nil {
+					return err
+				}
+				ctrlC <- dur
+				return nil
+			})
+		}
+		if err := g.Wait(); err != nil {
+			errC <- err
+		}
+	}()
+
+	duration := []time.Duration{}
+	for d := range ctrlC {
+		duration = append(duration, d)
 	}
-	return prombench.Report{}, nil
+	err := <-errC // guaranteed to have an err or be closed.
+	return prombench.Report{Duration: duration}, err
 }
