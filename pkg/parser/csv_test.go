@@ -90,7 +90,7 @@ A| 10 |20|5
 		}
 
 		actual := []prombench.Query{}
-		for q := range csv.Query() {
+		for q := range csv.Queries() {
 			actual = append(actual, q)
 		}
 		assert.DeepEqual(t, tc.expected, actual)

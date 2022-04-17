@@ -54,7 +54,7 @@ func WithConcurrency(concurrency int) Option {
 }
 
 // Implements prombench.Parser interface.
-func (c csvParser) Query() prombench.QueryChannel {
+func (c csvParser) Queries() prombench.QueryChannel {
 	return c.out
 }
 

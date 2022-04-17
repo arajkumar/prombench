@@ -2,7 +2,11 @@ package promqlworker
 
 import (
 	"context"
+	"io"
+	"io/ioutil"
 	"net/http"
+	"net/url"
+	"time"
 
 	"github.com/arajkumar/prombench"
 )
@@ -55,6 +59,27 @@ func WithConcurrency(concurrency int) Option {
 }
 
 // Implements Worker interface.
-func (w promqlWorker) Run(ctx context.Context, p prombench.Parser) (prombench.Report, error) {
+func (w promqlWorker) Run(ctx context.Context, host *url.URL, queries prombench.QueryChannel) (prombench.Report, error) {
+	errC := make(chan error, 1)
+	ctrlC := make(chan time.Duration, 1)
+	for q := range queries {
+		go func(q prombench.Query) {
+			r, err := q.NewHttpPromQuery(ctx, host)
+			if err != nil {
+				errC <- err
+				return
+			}
+			start := time.Now()
+			resp, err := w.client.Do(r)
+			if err == nil {
+				// Read and ignore reponse body!
+				io.Copy(ioutil.Discard, resp.Body)
+				resp.Body.Close()
+			} else {
+				errC <- err
+			}
+			ctrlC <- time.Since(start)
+		}(q)
+	}
 	return prombench.Report{}, nil
 }

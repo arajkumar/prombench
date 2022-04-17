@@ -1,8 +1,10 @@
 package prombench
 
+import "time"
+
 // Execution statistics of works.
 type Report struct {
-	durtion []float64
+	durtion []time.Duration
 }
 
 // Abstracts various type of reporters. e.g. Console, JSON, CSV..
