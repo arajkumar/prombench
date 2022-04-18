@@ -26,6 +26,7 @@ func (q Query) NewHttpPromQuery(ctx context.Context, host *url.URL) (*http.Reque
 	queryParam.Set("step", strconv.FormatInt(q.Step, 10))
 	h := host
 	h.RawQuery = queryParam.Encode()
+	h.Path = "/api/v1/query_range"
 
 	r, err := http.NewRequestWithContext(ctx, http.MethodGet, h.String(), nil)
 	if err != nil {

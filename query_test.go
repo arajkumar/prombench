@@ -16,7 +16,7 @@ func TestQuery(t *testing.T) {
 	}{
 		{
 			query:    Query{},
-			expected: "http://foo:9090?end=0&query=&start=0&step=0",
+			expected: "http://foo:9090/api/v1/query_range?end=0&query=&start=0&step=0",
 		},
 		{
 			query: Query{
@@ -25,7 +25,7 @@ func TestQuery(t *testing.T) {
 				EndTime:   200,
 				Step:      10,
 			},
-			expected: "http://foo:9090?end=200&query=hello%7B%7D&start=100&step=10",
+			expected: "http://foo:9090/api/v1/query_range?end=200&query=hello%7B%7D&start=100&step=10",
 		},
 	}
 

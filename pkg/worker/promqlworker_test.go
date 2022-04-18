@@ -27,6 +27,12 @@ func TestPromqlWorker(t *testing.T) {
 			EndTime:   200,
 			Step:      10,
 		},
+		{
+			PromQL:    "bar",
+			StartTime: 100,
+			EndTime:   200,
+			Step:      10,
+		},
 	}
 	inC := make(prombench.QueryChannel, len(queries))
 	for _, q := range queries {
