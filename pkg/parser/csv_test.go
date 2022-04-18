@@ -11,24 +11,25 @@ import (
 
 func TestCSVParser(t *testing.T) {
 	tt := []struct {
+		description string
 		in          string
 		concurrency int
 		expected    []prombench.Query
 		err         string
 	}{
 		{
-			// empty with concurrency 1
-			in:       "",
-			expected: []prombench.Query{},
+			description: "empty with concurrency 1",
+			in:          "",
+			expected:    []prombench.Query{},
 		},
 		{
-			// empty with concurrency 10
+			description: "empty with concurrency 10",
 			concurrency: 10,
 			in:          "",
 			expected:    []prombench.Query{},
 		},
 		{
-			// perfect line
+			description: "perfect line",
 			concurrency: 10,
 			in:          `demo_cpu_usage_seconds_total{mode="idle"}|100|200|50`,
 			expected: []prombench.Query{
@@ -41,7 +42,7 @@ func TestCSVParser(t *testing.T) {
 			},
 		},
 		{
-			// leading and trailing spaces
+			description: "leading and trailing spaces 1",
 			concurrency: 10,
 			in: `
 demo_cpu_usage_seconds_total{mode="idle"} | 100 |200|50
@@ -56,7 +57,7 @@ demo_cpu_usage_seconds_total{mode="idle"} | 100 |200|50
 			},
 		},
 		{
-			// leading and trailing spaces
+			description: "leading and trailing spaces 2",
 			concurrency: 10,
 			in: `
 demo_cpu_usage_seconds_total{mode="idle"} | 100 |200|50
@@ -80,19 +81,21 @@ A| 10 |20|5
 	}
 
 	for _, tc := range tt {
-		csv, err := NewCSVParser(strings.NewReader(tc.in), WithConcurrency(tc.concurrency))
-		if err != nil {
-			t.Errorf("NewCSVParser failed %s", err)
-		}
-		err = csv.Parse()
-		if err != nil && err != io.EOF {
-			t.Errorf("Parse failed %s", err)
-		}
+		t.Run(tc.description, func(t *testing.T) {
+			csv, err := NewCSVParser(strings.NewReader(tc.in), WithConcurrency(tc.concurrency))
+			if err != nil {
+				t.Errorf("NewCSVParser failed %s", err)
+			}
+			err = csv.Parse()
+			if err != nil && err != io.EOF {
+				t.Errorf("Parse failed %s", err)
+			}
 
-		actual := []prombench.Query{}
-		for q := range csv.Queries() {
-			actual = append(actual, q)
-		}
-		assert.DeepEqual(t, tc.expected, actual)
+			actual := []prombench.Query{}
+			for q := range csv.Queries() {
+				actual = append(actual, q)
+			}
+			assert.DeepEqual(t, tc.expected, actual)
+		})
 	}
 }

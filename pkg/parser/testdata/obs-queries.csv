@@ -9,4 +9,3 @@ demo_cpu_usage_seconds_total / on(instance, job) group_left demo_num_cpus|159705
 avg_over_time(demo_cpu_usage_seconds_total[15s])|1597057698698|1597059548699|120000
 delta(demo_cpu_usage_seconds_total[1m])|1597055698698|1597058548699|5000
 rate(demo_cpu_usage_seconds_total[1m])|1597055698698|1597059548699|5000
-
