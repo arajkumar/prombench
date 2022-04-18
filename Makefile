@@ -9,12 +9,17 @@ $(OUT):
 test-unit:
 	go test -race -short $(PKGS) -count=1 -timeout 1m
 
+.PHONY: tidy
+tidy:
+	go mod tidy
+	go mod verify
+
 .PHONY: fmt
 fmt:
 	go fmt ./...
 
 real-dataset.sz:
-	curl -s $(BENCHMARK_DATA) -o $@
+	curl -s -L $(BENCHMARK_DATA) -o $@
 
 .PHONY: promscale-up
 promscale-up:

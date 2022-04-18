@@ -1,0 +1,62 @@
+name: ci
+on:
+  - push
+  - pull_request
+env:
+  golang-version: '1.17'
+jobs:
+  prombench:
+    runs-on: ubuntu-latest
+    name: Build prombench binary
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        persist-credentials: false
+    - uses: actions/setup-go@v2
+      with:
+        go-version: ${{ env.golang-version }}
+    - run: make --always-make && git diff --exit-code
+  fmt:
+    runs-on: ubuntu-latest
+    name: Golang formatter
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        persist-credentials: false
+    - uses: actions/setup-go@v2
+      with:
+        go-version: ${{ env.golang-version }}
+    - run: make --always-make fmt && git diff --exit-code
+  tidy:
+    runs-on: ubuntu-latest
+    name: go.mod sanity check
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        persist-credentials: false
+    - uses: actions/setup-go@v2
+      with:
+        go-version: ${{ env.golang-version }}
+    - run: make --always-make tidy && git diff --exit-code
+  unit-tests:
+    runs-on: ubuntu-latest
+    name: Unit tests
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        persist-credentials: false
+    - uses: actions/setup-go@v2
+      with:
+        go-version: ${{ env.golang-version }}
+    - run: make --always-make test-unit
+  run-benchmark:
+    runs-on: ubuntu-latest
+    name: Run benchmark against promscale
+    steps:
+    - uses: actions/checkout@v2
+      with:
+        persist-credentials: false
+    - uses: actions/setup-go@v2
+      with:
+        go-version: ${{ env.golang-version }}
+    - run: make --always-make run-benchmark
