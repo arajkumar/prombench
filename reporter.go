@@ -1,6 +1,8 @@
 package prombench
 
+import "io"
+
 // Abstracts various type of reporters. e.g. Console, JSON, CSV..
 type Reporter interface {
-	Report(s Summary) error
+	Report(out io.Writer, s Summary) error
 }

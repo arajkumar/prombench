@@ -9,6 +9,7 @@ import (
 	"runtime"
 
 	csvparser "github.com/arajkumar/prombench/pkg/parser"
+	plain "github.com/arajkumar/prombench/pkg/reporter"
 	promqlworker "github.com/arajkumar/prombench/pkg/worker"
 )
 
@@ -64,7 +65,9 @@ func main() {
 	if err != nil {
 		errAndExit("Worker failed with err %s", err)
 	}
-	fmt.Println(report.ToSummary())
+
+	plain := plain.Plain{}
+	plain.Report(os.Stdout, report.ToSummary())
 }
 
 func errAndExit(format string, msg ...interface{}) {
