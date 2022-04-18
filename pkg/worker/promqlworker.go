@@ -59,7 +59,7 @@ func WithConcurrency(concurrency int) Option {
 	}
 }
 
-func (w promqlWorker) run(ctx context.Context, host *url.URL, q prombench.Query) (prombench.Stat, error) {
+func (w promqlWorker) run(ctx context.Context, host url.URL, q prombench.Query) (prombench.Stat, error) {
 	r, err := q.NewHttpPromQuery(ctx, host)
 	if err != nil {
 		return prombench.Stat{}, err
@@ -79,7 +79,7 @@ func (w promqlWorker) run(ctx context.Context, host *url.URL, q prombench.Query)
 }
 
 // Implements Worker interface.
-func (w promqlWorker) Run(ctx context.Context, host *url.URL, queries prombench.QueryChannel) (prombench.Report, error) {
+func (w promqlWorker) Run(ctx context.Context, host url.URL, queries <-chan prombench.Query) (prombench.Report, error) {
 	errC := make(chan error, 1)
 	ctrlC := make(chan prombench.Stat, cap(queries))
 	go func() {
@@ -87,14 +87,16 @@ func (w promqlWorker) Run(ctx context.Context, host *url.URL, queries prombench.
 		defer close(ctrlC)
 		var g errgroup.Group
 		for q := range queries {
-			g.Go(func() error {
-				dur, err := w.run(ctx, host, q)
-				if err != nil {
-					return err
-				}
-				ctrlC <- dur
-				return nil
-			})
+			func(q prombench.Query) {
+				g.Go(func() error {
+					stat, err := w.run(ctx, host, q)
+					if err != nil {
+						return err
+					}
+					ctrlC <- stat
+					return nil
+				})
+			}(q)
 		}
 		if err := g.Wait(); err != nil {
 			errC <- err

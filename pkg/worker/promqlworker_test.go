@@ -34,7 +34,7 @@ func TestPromqlWorker(t *testing.T) {
 			Step:      10,
 		},
 	}
-	inC := make(prombench.QueryChannel, len(queries))
+	inC := make(chan prombench.Query, len(queries))
 	for _, q := range queries {
 		inC <- q
 	}
@@ -42,7 +42,7 @@ func TestPromqlWorker(t *testing.T) {
 
 	w, _ := NewPromQLWorker(WithClient(server.Client()))
 	url, _ := url.Parse(server.URL)
-	w.Run(ctx, url, inC)
+	w.Run(ctx, *url, inC)
 	if count != int64(len(queries)) {
 		t.Errorf("Expected to work %v times, found %v", len(queries), count)
 	}

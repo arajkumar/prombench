@@ -38,7 +38,7 @@ func NewCSVParser(r io.Reader, opt ...Option) (prombench.Parser, error) {
 		c.concurrency = 1
 	}
 
-	c.out = make(prombench.QueryChannel, c.concurrency)
+	c.out = make(chan prombench.Query, c.concurrency)
 
 	return c, nil
 }
@@ -54,7 +54,7 @@ func WithConcurrency(concurrency int) Option {
 }
 
 // Implements prombench.Parser interface.
-func (c csvParser) Queries() prombench.QueryChannel {
+func (c csvParser) Queries() <-chan prombench.Query {
 	return c.out
 }
 

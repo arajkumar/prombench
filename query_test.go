@@ -35,7 +35,7 @@ func TestQuery(t *testing.T) {
 		t.Fatalf("Unable to parse url %s", err)
 	}
 	for _, tc := range tt {
-		r, err := tc.query.NewHttpPromQuery(ctx, host)
+		r, err := tc.query.NewHttpPromQuery(ctx, *host)
 		if err != nil {
 			t.Fatalf("Unable to construct http.Request %s", err)
 			continue

@@ -13,6 +13,7 @@ import (
 	promqlworker "github.com/arajkumar/prombench/pkg/worker"
 )
 
+// Inspired from https://github.com/rakyll/hey/blob/master/hey.go
 var usage = `Usage: prombench [options...] <url> <query_file>
 Options:
   -c  Number of workers to run concurrently. Total number of requests cannot
@@ -61,7 +62,7 @@ func main() {
 		errAndExit("Unable to start worker, err %s", err)
 	}
 	ctx := context.Background()
-	report, err := w.Run(ctx, hostUrl, csvParser.Queries())
+	report, err := w.Run(ctx, *hostUrl, csvParser.Queries())
 	if err != nil {
 		errAndExit("Worker failed with err %s", err)
 	}

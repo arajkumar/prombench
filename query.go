@@ -14,9 +14,7 @@ type Query struct {
 	Step      int64
 }
 
-type QueryChannel chan Query
-
-func (q Query) NewHttpPromQuery(ctx context.Context, host *url.URL) (*http.Request, error) {
+func (q Query) NewHttpPromQuery(ctx context.Context, host url.URL) (*http.Request, error) {
 	// Construct http request url.
 	queryParam := url.Values{}
 	queryParam.Set("query", q.PromQL)
