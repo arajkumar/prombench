@@ -26,8 +26,8 @@ func (q Query) NewHttpPromQuery(ctx context.Context, host url.URL) (*http.Reques
 	// TODO: Get rid of Query struct and replace it with url.Values type.
 	// queryParam.Set("start", strconv.FormatFloat(float64(q.StartTime)/1000, 'f', 3, 64))
 	// queryParam.Set("end", strconv.FormatFloat(float64(q.EndTime)/1000, 'f', 3, 64))
-	queryParam.Set("start", time.UnixMilli(q.StartTime).Format(rfc3339Milli))
-	queryParam.Set("end", time.UnixMilli(q.EndTime).Format(rfc3339Milli))
+	queryParam.Set("start", time.UnixMilli(q.StartTime).UTC().Format(rfc3339Milli))
+	queryParam.Set("end", time.UnixMilli(q.EndTime).UTC().Format(rfc3339Milli))
 	queryParam.Set("step", strconv.FormatInt(q.Step, 10))
 	h := host
 	h.RawQuery = queryParam.Encode()

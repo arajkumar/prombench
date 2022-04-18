@@ -18,7 +18,7 @@ func TestQuery(t *testing.T) {
 		{
 			description: "empty Query",
 			query:       Query{},
-			expected:    "http://foo:9090/api/v1/query_range?end=1970-01-01T05%3A30%3A00.000%2B05%3A30&query=&start=1970-01-01T05%3A30%3A00.000%2B05%3A30&step=0",
+			expected:    "http://foo:9090/api/v1/query_range?end=1970-01-01T00%3A00%3A00.000Z&query=&start=1970-01-01T00%3A00%3A00.000Z&step=0",
 		},
 		{
 			description: "simple Query",
@@ -28,7 +28,7 @@ func TestQuery(t *testing.T) {
 				EndTime:   200,
 				Step:      10,
 			},
-			expected: "http://foo:9090/api/v1/query_range?end=1970-01-01T05%3A30%3A00.200%2B05%3A30&query=hello%7B%7D&start=1970-01-01T05%3A30%3A00.100%2B05%3A30&step=10",
+			expected: "http://foo:9090/api/v1/query_range?end=1970-01-01T00%3A00%3A00.200Z&query=hello%7B%7D&start=1970-01-01T00%3A00%3A00.100Z&step=10",
 		},
 	}
 
