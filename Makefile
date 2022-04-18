@@ -2,6 +2,8 @@ OUT=./prombench
 PKGS=$(shell go list ./... | grep -v /test/e2e)
 BENCHMARK_DATA=https://github.com/timescale/promscale/raw/master/pkg/tests/testdata/real-dataset.sz
 
+# leave it to go to build
+.PHONY: $(OUT)
 $(OUT):
 	go build -o $(OUT) cmd/prombench.go 
 

@@ -6,6 +6,7 @@ import (
 	"io/ioutil"
 	"net/http"
 	"net/url"
+	"strconv"
 	"time"
 
 	"github.com/arajkumar/prombench"
@@ -18,10 +19,12 @@ type Option func(*promqlWorker) error
 type promqlWorker struct {
 	client      *http.Client
 	concurrency int
+	headers     http.Header
+	host        url.URL
 }
 
-func NewPromQLWorker(opt ...Option) (prombench.Worker, error) {
-	w := promqlWorker{}
+func NewPromQLWorker(host url.URL, opt ...Option) (prombench.Worker, error) {
+	w := promqlWorker{host: host}
 
 	for _, f := range opt {
 		if err := f(&w); err != nil {
@@ -59,10 +62,45 @@ func WithConcurrency(concurrency int) Option {
 	}
 }
 
-func (w promqlWorker) run(ctx context.Context, host url.URL, q prombench.Query) (prombench.Stat, error) {
-	r, err := q.NewHttpPromQuery(ctx, host)
+// WithHeaders adds additional headers to http.Request.
+func WithHeaders(headers http.Header) Option {
+	return func(w *promqlWorker) error {
+		w.headers = headers
+		return nil
+	}
+}
+
+const rfc3339Milli = "2006-01-02T15:04:05.000Z07:00"
+
+func (w promqlWorker) newHttpPromQuery(ctx context.Context, q prombench.Query) (*http.Request, error) {
+	// Construct http request url.
+	queryParam := url.Values{}
+	queryParam.Set("query", q.PromQL)
+	// TODO: Get rid of Query struct and replace it with url.Values type.
+	// queryParam.Set("start", strconv.FormatFloat(float64(q.StartTime)/1000, 'f', 3, 64))
+	// queryParam.Set("end", strconv.FormatFloat(float64(q.EndTime)/1000, 'f', 3, 64))
+	queryParam.Set("start", time.UnixMilli(q.StartTime).UTC().Format(rfc3339Milli))
+	queryParam.Set("end", time.UnixMilli(q.EndTime).UTC().Format(rfc3339Milli))
+	queryParam.Set("step", strconv.FormatInt(q.Step, 10))
+	h := w.host
+	h.RawQuery = queryParam.Encode()
+	h.Path = "/api/v1/query_range"
+
+	r, err := http.NewRequestWithContext(ctx, http.MethodGet, h.String(), nil)
+	if err != nil {
+		return nil, err
+	}
+	return r, nil
+}
+
+func (w promqlWorker) run(ctx context.Context, q prombench.Query) (prombench.Stat, error) {
+	r, err := w.newHttpPromQuery(ctx, q)
 	if err != nil {
 		return prombench.Stat{}, err
+	}
+	// append additional headers.
+	for hk, hv := range w.headers {
+		r.Header.Set(hk, hv[0])
 	}
 	start := time.Now()
 	resp, err := w.client.Do(r)
@@ -79,7 +117,7 @@ func (w promqlWorker) run(ctx context.Context, host url.URL, q prombench.Query) 
 }
 
 // Implements Worker interface.
-func (w promqlWorker) Run(ctx context.Context, host url.URL, queries <-chan prombench.Query) (prombench.Report, error) {
+func (w promqlWorker) Run(ctx context.Context, queries <-chan prombench.Query) (prombench.Report, error) {
 	errC := make(chan error, 1)
 	ctrlC := make(chan prombench.Stat, cap(queries))
 	go func() {
@@ -89,7 +127,7 @@ func (w promqlWorker) Run(ctx context.Context, host url.URL, queries <-chan prom
 		for q := range queries {
 			func(q prombench.Query) {
 				g.Go(func() error {
-					stat, err := w.run(ctx, host, q)
+					stat, err := w.run(ctx, q)
 					if err != nil {
 						return err
 					}
