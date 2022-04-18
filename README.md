@@ -39,6 +39,14 @@ make run-benchmark
 
 # Sample benchmark result
 ```
+$ ./prombench "http://localhost:9201" "pkg/parser/testdata/obs-queries.csv"
+NumOfQueries: 11
+TotalDuration:  257.912407ms
+Min: 15.728243ms
+Median: 22.763106ms
+Average: 23.446582ms
+Max: 31.884119ms
+
 NumOfQueries: 11
 TotalDuration:  257.912407ms
 Min: 15.728243ms
