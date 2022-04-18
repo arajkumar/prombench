@@ -1,0 +1,23 @@
+version: '3.0'
+
+services:
+  db:
+    #TODO (james): Replace hardcoded value
+    image: ghcr.io/timescale/dev_promscale_extension:develop-ts2-pg14
+    ports:
+      - 5432:5432/tcp
+    environment:
+      POSTGRES_PASSWORD: password
+      POSTGRES_USER: postgres
+
+  promscale:
+    image: timescale/promscale:latest
+    ports:
+      - 9201:9201/tcp
+      - 9202:9202/tcp
+    restart: on-failure
+    depends_on:
+      - db
+    environment:
+      PROMSCALE_WEB_TELEMETRY_PATH: /metrics-text
+      PROMSCALE_DB_URI: postgres://postgres:password@db:5432/postgres?sslmode=allow

@@ -25,11 +25,22 @@ make prombench
 To run tests,
 
 ```
-make unit-test
+make test-unit
 ```
 
 # To benchmark against Promscale instance
+The following make target would setup promscale instance and ingests [sample data](pkg/parser/testdata/obs-queries.csv) to execute benchmark.
 
 ```
-make benchmark
+make run-benchmark
+```
+
+# Sample benchmark result
+```
+NumOfQueries: 11
+TotalDuration:  257.912407ms
+Min: 15.728243ms
+Median: 22.763106ms
+Average: 23.446582ms
+Max: 31.884119ms
 ```

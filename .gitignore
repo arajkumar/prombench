@@ -17,3 +17,6 @@
 
 # Program
 prombench
+
+# Testdata
+*.sz
