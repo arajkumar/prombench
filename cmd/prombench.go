@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"net/url"
 	"os"
+	"os/signal"
 	"runtime"
 
 	csvparser "github.com/arajkumar/prombench/pkg/parser"
@@ -54,14 +55,31 @@ func main() {
 		errAndExit("Unable to start CSV parser, err %s", err)
 	}
 
+	// copied from https://medium.com/@matryer/make-ctrl-c-cancel-the-context-context-bd006a8ad6ff
+	ctx := context.Background()
+	// trap Ctrl+C and call cancel on the context
+	ctx, cancel := context.WithCancel(ctx)
+	c := make(chan os.Signal, 1)
+	signal.Notify(c, os.Interrupt)
+	defer func() {
+		signal.Stop(c)
+		cancel()
+	}()
+	go func() {
+		select {
+		case <-c:
+			cancel()
+		case <-ctx.Done():
+		}
+	}()
+
 	// start parsing loop
-	go csvParser.Parse()
+	go csvParser.Parse(ctx)
 
 	w, err := promqlworker.NewPromQLWorker()
 	if err != nil {
 		errAndExit("Unable to start worker, err %s", err)
 	}
-	ctx := context.Background()
 	report, err := w.Run(ctx, *hostUrl, csvParser.Queries())
 	if err != nil {
 		errAndExit("Worker failed with err %s", err)

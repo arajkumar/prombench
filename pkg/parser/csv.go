@@ -1,6 +1,7 @@
 package csvparser
 
 import (
+	"context"
 	"encoding/csv"
 	"io"
 	"strconv"
@@ -59,7 +60,7 @@ func (c csvParser) Queries() <-chan prombench.Query {
 }
 
 // Implements prombench.Parser interface.
-func (c csvParser) Parse() error {
+func (c csvParser) Parse(ctx context.Context) error {
 	defer close(c.out)
 	for {
 		record, err := c.csvReader.Read()
@@ -78,11 +79,16 @@ func (c csvParser) Parse() error {
 		if err != nil {
 			return err
 		}
-		c.out <- prombench.Query{
+		select {
+		case c.out <- prombench.Query{
 			PromQL:    strings.TrimSpace(record[0]),
 			StartTime: startTime,
 			EndTime:   endTime,
 			Step:      step,
+		}:
+			continue
+		case <-ctx.Done():
+			break
 		}
 	}
 	return nil
