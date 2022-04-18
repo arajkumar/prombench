@@ -1,3 +1,5 @@
+[![ci](https://github.com/arajkumar/prombench/actions/workflows/ci.yaml/badge.svg)](https://github.com/arajkumar/prombench/actions/workflows/ci.yaml)
+
 # prombench
 prombench is a tiny program that sends some load to a prometheus implementations in the form of promql.
 
