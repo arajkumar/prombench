@@ -59,10 +59,10 @@ func WithConcurrency(concurrency int) Option {
 	}
 }
 
-func (w promqlWorker) run(ctx context.Context, host *url.URL, q prombench.Query) (time.Duration, error) {
+func (w promqlWorker) run(ctx context.Context, host *url.URL, q prombench.Query) (prombench.Stat, error) {
 	r, err := q.NewHttpPromQuery(ctx, host)
 	if err != nil {
-		return 0, err
+		return prombench.Stat{}, err
 	}
 	start := time.Now()
 	resp, err := w.client.Do(r)
@@ -71,15 +71,17 @@ func (w promqlWorker) run(ctx context.Context, host *url.URL, q prombench.Query)
 		io.Copy(ioutil.Discard, resp.Body)
 		resp.Body.Close()
 	} else {
-		return 0, err
+		return prombench.Stat{}, err
 	}
-	return time.Since(start), err
+	return prombench.Stat{
+		Duration: time.Since(start),
+	}, err
 }
 
 // Implements Worker interface.
 func (w promqlWorker) Run(ctx context.Context, host *url.URL, queries prombench.QueryChannel) (prombench.Report, error) {
 	errC := make(chan error, 1)
-	ctrlC := make(chan time.Duration, 1)
+	ctrlC := make(chan prombench.Stat, cap(queries))
 	go func() {
 		defer close(errC)
 		defer close(ctrlC)
@@ -99,10 +101,10 @@ func (w promqlWorker) Run(ctx context.Context, host *url.URL, queries prombench.
 		}
 	}()
 
-	duration := []time.Duration{}
-	for d := range ctrlC {
-		duration = append(duration, d)
+	report := prombench.Report{}
+	for stat := range ctrlC {
+		report = append(report, stat)
 	}
 	err := <-errC // guaranteed to have an err or be closed.
-	return prombench.Report{Duration: duration}, err
+	return report, err
 }

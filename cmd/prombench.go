@@ -64,7 +64,7 @@ func main() {
 	if err != nil {
 		errAndExit("Worker failed with err %s", err)
 	}
-	fmt.Println(report)
+	fmt.Println(report.ToSummary())
 }
 
 func errAndExit(format string, msg ...interface{}) {
