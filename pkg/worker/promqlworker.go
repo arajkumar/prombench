@@ -39,14 +39,17 @@ func (w promqlWorker) runWorker(ctx context.Context, q prombench.Query) prombenc
 	// TODO: should we exclude other latencies like DNS dial..?
 	start := time.Now()
 	resp, err := w.httpQuery.Client().Do(r)
+	var statusCode int
 	if err == nil {
+		statusCode = resp.StatusCode
 		// Read and ignore reponse body!
 		io.Copy(ioutil.Discard, resp.Body)
 		resp.Body.Close()
 	}
 	return prombench.Stat{
-		Duration: time.Since(start),
-		Error:    err,
+		Duration:   time.Since(start),
+		Error:      err,
+		StatusCode: statusCode,
 	}
 }
 

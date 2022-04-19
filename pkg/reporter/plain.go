@@ -11,12 +11,19 @@ type Plain struct {
 }
 
 var (
-	defaultTmpl = `NumOfQueries: {{ .NumOfQueries }}
-TotalDuration:	{{ .TotalDuration }}
-Min: {{ .Min }}
-Median: {{ .Median }}
-Average: {{ .Avg }}
-Max: {{ .Max }}
+	defaultTmpl = `Summary:
+  NumOfQueries: {{ .NumOfQueries }}
+  TotalDuration: {{ .TotalDuration }}
+  Min: {{ .Min }}
+  Median: {{ .Median }}
+  Average: {{ .Avg }}
+  Max: {{ .Max }}
+
+Status code distribution:{{ range $code, $num := .StatusCodeDist }}
+  [{{ $code }}]	{{ $num }} responses{{ end }}
+
+{{ if gt (len .ErrDist) 0 }}Error distribution:{{ range $err, $num := .ErrDist }}
+  [{{ $num }}]	{{ $err }}{{ end }}{{ end }}
 `
 )
 
