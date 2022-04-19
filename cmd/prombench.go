@@ -12,6 +12,7 @@ import (
 	"runtime"
 
 	csvparser "github.com/arajkumar/prombench/pkg/parser"
+	httpquery "github.com/arajkumar/prombench/pkg/querier"
 	plain "github.com/arajkumar/prombench/pkg/reporter"
 	promqlworker "github.com/arajkumar/prombench/pkg/worker"
 )
@@ -62,7 +63,7 @@ func main() {
 	if err != nil {
 		errAndExit("Unable to open file %s, err %s", input, err)
 	}
-	csvParser, err := csvparser.NewCSVParser(inputReader)
+	csvParser, err := csvparser.New(inputReader, csvparser.WithChannelSize(*concurrency*10))
 	if err != nil {
 		errAndExit("Unable to start CSV parser, err %s", err)
 	}
@@ -97,7 +98,8 @@ func main() {
 	// start parsing loop
 	go csvParser.Parse(ctx)
 
-	w, err := promqlworker.NewPromQLWorker(*hostUrl, promqlworker.WithHeaders(header), promqlworker.WithConcurrency(*concurrency))
+	httpQuerier, _ := httpquery.New(*hostUrl, httpquery.WithHeaders(header))
+	w, err := promqlworker.New(httpQuerier, *concurrency)
 	if err != nil {
 		errAndExit("Unable to start worker, err %s", err)
 	}

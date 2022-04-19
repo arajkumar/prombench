@@ -19,7 +19,7 @@ type csvParser struct {
 	chSize    int
 }
 
-func NewCSVParser(r io.Reader, opt ...Option) (prombench.Parser, error) {
+func New(r io.Reader, opt ...Option) (prombench.Parser, error) {
 	csvReader := csv.NewReader(r)
 	// Data file would contain | as separator instead of default(,).
 	csvReader.Comma = '|'

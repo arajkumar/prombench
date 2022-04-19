@@ -84,7 +84,7 @@ A| 10 |20|5
 	ctx := context.Background()
 	for _, tc := range tt {
 		t.Run(tc.description, func(t *testing.T) {
-			csv, err := NewCSVParser(strings.NewReader(tc.in), WithChannelSize(tc.chSize))
+			csv, err := New(strings.NewReader(tc.in), WithChannelSize(tc.chSize))
 			if err != nil {
 				t.Errorf("NewCSVParser failed %s", err)
 			}
