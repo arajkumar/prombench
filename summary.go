@@ -7,6 +7,7 @@ import (
 
 // Execution statistics of works.
 type Stat struct {
+	Error    error
 	Duration time.Duration
 }
 

@@ -33,8 +33,8 @@ Options:
 `
 
 var (
-	c    = flag.Int("c", 50, "")
-	cpus = flag.Int("cpus", runtime.GOMAXPROCS(-1), "")
+	concurrency = flag.Int("c", 50, "")
+	cpus        = flag.Int("cpus", runtime.GOMAXPROCS(-1), "")
 )
 
 func main() {
@@ -62,7 +62,7 @@ func main() {
 	if err != nil {
 		errAndExit("Unable to open file %s, err %s", input, err)
 	}
-	csvParser, err := csvparser.NewCSVParser(inputReader, csvparser.WithConcurrency(*c))
+	csvParser, err := csvparser.NewCSVParser(inputReader)
 	if err != nil {
 		errAndExit("Unable to start CSV parser, err %s", err)
 	}
@@ -97,14 +97,11 @@ func main() {
 	// start parsing loop
 	go csvParser.Parse(ctx)
 
-	w, err := promqlworker.NewPromQLWorker(*hostUrl, promqlworker.WithHeaders(header))
+	w, err := promqlworker.NewPromQLWorker(*hostUrl, promqlworker.WithHeaders(header), promqlworker.WithConcurrency(*concurrency))
 	if err != nil {
 		errAndExit("Unable to start worker, err %s", err)
 	}
-	report, err := w.Run(ctx, csvParser.Queries())
-	if err != nil {
-		errAndExit("Worker failed with err %s", err)
-	}
+	report := w.Run(ctx, csvParser.Queries())
 
 	plain := plain.Plain{}
 	plain.Report(os.Stdout, report.ToSummary())

@@ -14,9 +14,9 @@ import (
 type Option func(*csvParser) error
 
 type csvParser struct {
-	out         chan prombench.Query
-	csvReader   *csv.Reader
-	concurrency int
+	out       chan prombench.Query
+	csvReader *csv.Reader
+	chSize    int
 }
 
 func NewCSVParser(r io.Reader, opt ...Option) (prombench.Parser, error) {
@@ -34,22 +34,22 @@ func NewCSVParser(r io.Reader, opt ...Option) (prombench.Parser, error) {
 		}
 	}
 
-	// defaults to sane concurrency limit.
-	if c.concurrency < 1 {
-		c.concurrency = 1
+	// defaults to sane channel capacity.
+	if c.chSize < 1 {
+		c.chSize = 100
 	}
 
-	c.out = make(chan prombench.Query, c.concurrency)
+	c.out = make(chan prombench.Query, c.chSize)
 
 	return c, nil
 }
 
-// WithConcurrency sets the concurrency limit for the network calls.
+// WithChannelSize sets the channel capacity.
 //
-// If not passed to NewPromQLWorker, sane default(1) will be used.
-func WithConcurrency(concurrency int) Option {
+// If not passed to NewCSVParser, sane default(100) will be used.
+func WithChannelSize(chSize int) Option {
 	return func(c *csvParser) error {
-		c.concurrency = concurrency
+		c.chSize = chSize
 		return nil
 	}
 }

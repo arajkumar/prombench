@@ -14,24 +14,24 @@ func TestCSVParser(t *testing.T) {
 	tt := []struct {
 		description string
 		in          string
-		concurrency int
+		chSize      int
 		expected    []prombench.Query
 		err         string
 	}{
 		{
-			description: "empty with concurrency 1",
+			description: "empty with chSize 1",
 			in:          "",
 			expected:    []prombench.Query{},
 		},
 		{
-			description: "empty with concurrency 10",
-			concurrency: 10,
+			description: "empty with chSize 10",
+			chSize:      10,
 			in:          "",
 			expected:    []prombench.Query{},
 		},
 		{
 			description: "perfect line",
-			concurrency: 10,
+			chSize:      10,
 			in:          `demo_cpu_usage_seconds_total{mode="idle"}|100|200|50`,
 			expected: []prombench.Query{
 				{
@@ -44,7 +44,7 @@ func TestCSVParser(t *testing.T) {
 		},
 		{
 			description: "leading and trailing spaces 1",
-			concurrency: 10,
+			chSize:      10,
 			in: `
 demo_cpu_usage_seconds_total{mode="idle"} | 100 |200|50
 `,
@@ -59,7 +59,7 @@ demo_cpu_usage_seconds_total{mode="idle"} | 100 |200|50
 		},
 		{
 			description: "leading and trailing spaces 2",
-			concurrency: 10,
+			chSize:      10,
 			in: `
 demo_cpu_usage_seconds_total{mode="idle"} | 100 |200|50
 A| 10 |20|5
@@ -84,7 +84,7 @@ A| 10 |20|5
 	ctx := context.Background()
 	for _, tc := range tt {
 		t.Run(tc.description, func(t *testing.T) {
-			csv, err := NewCSVParser(strings.NewReader(tc.in), WithConcurrency(tc.concurrency))
+			csv, err := NewCSVParser(strings.NewReader(tc.in), WithChannelSize(tc.chSize))
 			if err != nil {
 				t.Errorf("NewCSVParser failed %s", err)
 			}

@@ -7,10 +7,10 @@ import (
 	"net/http"
 	"net/url"
 	"strconv"
+	"sync"
 	"time"
 
 	"github.com/arajkumar/prombench"
-	"golang.org/x/sync/errgroup"
 )
 
 // Option controls the configuration of a Matcher.
@@ -93,58 +93,58 @@ func (w promqlWorker) newHttpPromQuery(ctx context.Context, q prombench.Query) (
 	return r, nil
 }
 
-func (w promqlWorker) run(ctx context.Context, q prombench.Query) (prombench.Stat, error) {
+func (w promqlWorker) runWorker(ctx context.Context, q prombench.Query) prombench.Stat {
 	r, err := w.newHttpPromQuery(ctx, q)
 	if err != nil {
-		return prombench.Stat{}, err
+		return prombench.Stat{Error: err}
 	}
 	// append additional headers.
 	for hk, hv := range w.headers {
 		r.Header.Set(hk, hv[0])
 	}
+	// TODO: should we exclude other latencies like DNS dial..?
 	start := time.Now()
 	resp, err := w.client.Do(r)
 	if err == nil {
 		// Read and ignore reponse body!
 		io.Copy(ioutil.Discard, resp.Body)
 		resp.Body.Close()
-	} else {
-		return prombench.Stat{}, err
 	}
 	return prombench.Stat{
 		Duration: time.Since(start),
-	}, err
+		Error:    err,
+	}
+}
+
+func (w promqlWorker) run(ctx context.Context, queries <-chan prombench.Query, stat chan<- prombench.Stat) {
+	for q := range queries {
+		stat <- w.runWorker(ctx, q)
+	}
 }
 
 // Implements Worker interface.
-func (w promqlWorker) Run(ctx context.Context, queries <-chan prombench.Query) (prombench.Report, error) {
-	errC := make(chan error, 1)
-	ctrlC := make(chan prombench.Stat, cap(queries))
+func (w promqlWorker) Run(ctx context.Context, queries <-chan prombench.Query) prombench.Report {
+	statC := make(chan prombench.Stat, cap(queries))
+
+	var wg sync.WaitGroup
+	wg.Add(w.concurrency)
+
+	for i := 0; i < w.concurrency; i++ {
+		go func() {
+			w.run(ctx, queries, statC)
+			wg.Done()
+		}()
+	}
+
+	// Wait for all workers to finish and then close statC
 	go func() {
-		defer close(errC)
-		defer close(ctrlC)
-		var g errgroup.Group
-		for q := range queries {
-			func(q prombench.Query) {
-				g.Go(func() error {
-					stat, err := w.run(ctx, q)
-					if err != nil {
-						return err
-					}
-					ctrlC <- stat
-					return nil
-				})
-			}(q)
-		}
-		if err := g.Wait(); err != nil {
-			errC <- err
-		}
+		wg.Wait()
+		close(statC)
 	}()
 
 	report := prombench.Report{}
-	for stat := range ctrlC {
+	for stat := range statC {
 		report = append(report, stat)
 	}
-	err := <-errC // guaranteed to have an err or be closed.
-	return report, err
+	return report
 }
